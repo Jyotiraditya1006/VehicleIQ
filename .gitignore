@@ -1,0 +1,26 @@
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+
+# Databases & Local Data
+*.db
+*.sqlite3
+vehicleiq_dev.db
+test_vehicleiq.db
+
+# Next.js & Frontend Node Modules
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+mobile/node_modules/
+
+# OS & IDE Files
+.DS_Store
+Thumbs.db
+.idea/
+*.swp

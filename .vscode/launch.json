@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FastAPI: Run Backend API",
+      "type": "python",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "backend.app.main:app",
+        "--reload",
+        "--port",
+        "8000"
+      ],
+      "jinja": true,
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Python: Ingestion Simulation",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "args": [
+        "--mode", "simulation",
+        "--scenario", "aggressive_sport",
+        "--count", "30"
+      ],
+      "console": "integratedTerminal"
+    }
+  ]
+}

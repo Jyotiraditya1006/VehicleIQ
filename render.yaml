@@ -1,0 +1,24 @@
+services:
+  # 1. FastAPI Ingestion & ML Prediction API Service
+  - type: web
+    name: vehicleiq-backend-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DB_TYPE
+        value: postgres
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vehicleiq-postgres-db
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        generateValue: true
+
+databases:
+  # 2. Managed PostgreSQL Database
+  - name: vehicleiq-postgres-db
+    databaseName: vehicleiq
+    user: vehicleiq_user
