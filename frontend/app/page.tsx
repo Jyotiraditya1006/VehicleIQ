@@ -385,8 +385,8 @@ export default function LuxuryDashboard() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <span style={{ fontSize: '32px' }}>👑</span>
-            <h1 className="font-serif-luxury text-gold-gradient" style={{ fontSize: '36px', fontWeight: 900, letterSpacing: '-0.5px' }}>
-              VEHICLE<span style={{ color: '#fff', fontStyle: 'italic' }}>IQ</span>
+            <h1 className="brand-logo-font text-gold-gradient" style={{ fontSize: '38px', fontWeight: 900, letterSpacing: '2px' }}>
+              VEHICLE<span className="brand-iq-font" style={{ color: '#00f2fe', fontStyle: 'normal', marginLeft: '4px' }}>IQ</span>
             </h1>
             <span style={{ background: 'rgba(212, 175, 55, 0.12)', color: '#d4af37', border: '1px solid rgba(212, 175, 55, 0.3)', padding: '6px 16px', borderRadius: '30px', fontSize: '11px', fontWeight: 800, letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span className="gold-beacon"></span> LUXURY AUTOMOTIVE AI INTELLIGENCE
