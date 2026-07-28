@@ -203,8 +203,13 @@ export default function LuxuryRedDashboard() {
     }
   ]);
 
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+
     const fetchData = async () => {
       try {
         const healthRes = await fetch(`${API_BASE_URL}/api/v1/health-score?vehicle_id=${selectedVehicle}`);
