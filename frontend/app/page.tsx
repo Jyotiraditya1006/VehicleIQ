@@ -205,12 +205,22 @@ export default function LuxuryRedDashboard() {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  const handleCarSelect = (carId: string) => {
+    setSelectedVehicle(carId);
+    if (vehicleHealthMap[carId]) {
+      setHealth(vehicleHealthMap[carId]);
+    }
+  };
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
 
+  useEffect(() => {
     const fetchData = async () => {
+
+
       try {
         const healthRes = await fetch(`${API_BASE_URL}/api/v1/health-score?vehicle_id=${selectedVehicle}`);
         if (healthRes.ok) {
@@ -218,7 +228,7 @@ export default function LuxuryRedDashboard() {
           setHealth(healthJson);
         }
 
-        const telemRes = await fetch(`${API_BASE_URL}/api/v1/telemetry/recent?limit=1`);
+        const telemRes = await fetch(`${API_BASE_URL}/api/v1/telemetry/recent?limit=5`);
         if (telemRes.ok) {
           const telemJson = await telemRes.json();
           if (telemJson.data && telemJson.data.length > 0) {
@@ -428,8 +438,8 @@ export default function LuxuryRedDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           <div style={{ textAlign: 'right' }}>
             <span style={{ fontSize: '11px', color: '#a1a1aa', textTransform: 'uppercase', fontWeight: 700 }}>AI Predicted Vehicle Health</span>
-            <div style={{ fontSize: '36px', fontWeight: 900, color: health.overall_health_score >= 80 ? '#43e97b' : health.overall_health_score >= 60 ? '#ff758c' : '#ff0844' }}>
-              {health.overall_health_score}%
+            <div style={{ fontSize: '36px', fontWeight: 900, color: (health?.overall_health_score ?? 95) >= 80 ? '#43e97b' : (health?.overall_health_score ?? 95) >= 60 ? '#ff758c' : '#ff0844' }}>
+              {health?.overall_health_score ?? 95}%
             </div>
           </div>
         </div>
@@ -496,12 +506,12 @@ export default function LuxuryRedDashboard() {
         <div className="luxury-glass" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
             <span style={{ fontWeight: 700, color: '#fff', fontSize: '15px' }}>Brake System Pad Lifespan</span>
-            <span style={{ fontWeight: 900, fontSize: '18px', color: health.component_scores.brake_health > 70 ? '#43e97b' : '#ff0844' }}>
-              {health.component_scores.brake_health}%
+            <span style={{ fontWeight: 900, fontSize: '18px', color: (health?.component_scores?.brake_health ?? 95) > 70 ? '#43e97b' : '#ff0844' }}>
+              {health?.component_scores?.brake_health ?? 95}%
             </span>
           </div>
           <div style={{ height: '8px', background: '#1e293b', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
-            <div style={{ height: '100%', width: `${health.component_scores.brake_health}%`, background: health.component_scores.brake_health > 70 ? 'linear-gradient(90deg, #43e97b, #38f9d7)' : 'linear-gradient(90deg, #ff0844, #ffb199)' }}></div>
+            <div style={{ height: '100%', width: `${health?.component_scores?.brake_health ?? 95}%`, background: (health?.component_scores?.brake_health ?? 95) > 70 ? 'linear-gradient(90deg, #43e97b, #38f9d7)' : 'linear-gradient(90deg, #ff0844, #ffb199)' }}></div>
           </div>
           <span style={{ fontSize: '12px', color: '#a1a1aa' }}>Braking Friction Wear: Nominal</span>
         </div>
@@ -510,12 +520,12 @@ export default function LuxuryRedDashboard() {
         <div className="luxury-glass" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
             <span style={{ fontWeight: 700, color: '#fff', fontSize: '15px' }}>Engine Thermal & Mechanical</span>
-            <span style={{ fontWeight: 900, fontSize: '18px', color: health.component_scores.engine_health > 70 ? '#43e97b' : '#ff0844' }}>
-              {health.component_scores.engine_health}%
+            <span style={{ fontWeight: 900, fontSize: '18px', color: (health?.component_scores?.engine_health ?? 94) > 70 ? '#43e97b' : '#ff0844' }}>
+              {health?.component_scores?.engine_health ?? 94}%
             </span>
           </div>
           <div style={{ height: '8px', background: '#1e293b', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
-            <div style={{ height: '100%', width: `${health.component_scores.engine_health}%`, background: health.component_scores.engine_health > 70 ? 'linear-gradient(90deg, #ff0844, #ff758c)' : 'linear-gradient(90deg, #ff0844, #ffb199)' }}></div>
+            <div style={{ height: '100%', width: `${health?.component_scores?.engine_health ?? 94}%`, background: (health?.component_scores?.engine_health ?? 94) > 70 ? 'linear-gradient(90deg, #ff0844, #ff758c)' : 'linear-gradient(90deg, #ff0844, #ffb199)' }}></div>
           </div>
           <span style={{ fontSize: '12px', color: '#a1a1aa' }}>Thermodynamic Expansion: Stable</span>
         </div>
@@ -524,16 +534,17 @@ export default function LuxuryRedDashboard() {
         <div className="luxury-glass" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
             <span style={{ fontWeight: 700, color: '#fff', fontSize: '15px' }}>Battery & Charging System</span>
-            <span style={{ fontWeight: 900, fontSize: '18px', color: health.component_scores.battery_health > 70 ? '#43e97b' : '#ff0844' }}>
-              {health.component_scores.battery_health}%
+            <span style={{ fontWeight: 900, fontSize: '18px', color: (health?.component_scores?.battery_health ?? 96) > 70 ? '#43e97b' : '#ff0844' }}>
+              {health?.component_scores?.battery_health ?? 96}%
             </span>
           </div>
           <div style={{ height: '8px', background: '#1e293b', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
-            <div style={{ height: '100%', width: `${health.component_scores.battery_health}%`, background: health.component_scores.battery_health > 70 ? 'linear-gradient(90deg, #00f2fe, #4facfe)' : 'linear-gradient(90deg, #ff0844, #ffb199)' }}></div>
+            <div style={{ height: '100%', width: `${health?.component_scores?.battery_health ?? 96}%`, background: (health?.component_scores?.battery_health ?? 96) > 70 ? 'linear-gradient(90deg, #00f2fe, #4facfe)' : 'linear-gradient(90deg, #ff0844, #ffb199)' }}></div>
           </div>
           <span style={{ fontSize: '12px', color: '#a1a1aa' }}>12V Cell Voltage Stability: Good</span>
         </div>
       </div>
+
 
       {/* --- Executive Diagnostic Findings & Step-by-Step Fix Guides --- */}
       <h2 className="font-serif-luxury" style={{ fontSize: '22px', color: '#fff', marginBottom: '16px' }}>
