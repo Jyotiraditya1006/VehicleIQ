@@ -30,9 +30,9 @@
 - **Physics-Grounded Simulation**: To systematically evaluate rare catastrophic failure scenarios (such as engine thermal runaway at 115°C+ or severe alternator voltage collapse), a multi-scenario physics engine was constructed modeling thermodynamic heat buildup and electrical cell decay.
 
 ### 2. Live Cloud Deployment Proof
-- **Web Dashboard (Vercel)**: Configured via [`vercel.json`](file:///C:/Users/Jyotiraditya%20Patil/.gemini/antigravity/scratch/VehicleIQ/vercel.json)
-- **FastAPI API & PostgreSQL (Render)**: Configured via [`render.yaml`](file:///C:/Users/Jyotiraditya%20Patil/.gemini/antigravity/scratch/VehicleIQ/render.yaml)
-- **Automated CI/CD**: Built with GitHub Actions ([`.github/workflows/deploy.yml`](file:///C:/Users/Jyotiraditya%20Patil/.gemini/antigravity/scratch/VehicleIQ/.github/workflows/deploy.yml))
+- **Web Dashboard (Vercel)**: Configured via [`vercel.json`](vercel.json)
+- **FastAPI API & PostgreSQL (Render)**: Configured via [`render.yaml`](render.yaml)
+- **Automated CI/CD**: Built with GitHub Actions ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml))
 
 ---
 
