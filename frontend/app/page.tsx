@@ -485,6 +485,26 @@ export default function LuxuryDashboard() {
         </div>
       </div>
 
+      {/* --- 3D Hypercar HUD Concept Showcase --- */}
+      <div className="luxury-glass" style={{ padding: '24px', marginBottom: '36px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <span style={{ fontSize: '11px', color: '#d4af37', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>STITCH AI DESIGN CONCEPT</span>
+            <h3 className="font-serif-luxury" style={{ fontSize: '20px', color: '#fff', fontWeight: 800, marginTop: '2px' }}>
+              3D Hypercar Cockpit & Telemetry HUD Wireframe
+            </h3>
+          </div>
+          <span style={{ background: 'rgba(0, 242, 254, 0.12)', color: '#00f2fe', padding: '4px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>
+            PIXEL-PERFECT CONCEPT
+          </span>
+        </div>
+        <img
+          src="/hypercar_hud_mockup.jpg"
+          alt="3D Hypercar Digital Dashboard HUD Mockup"
+          style={{ width: '100%', maxHeight: '340px', objectFit: 'cover', borderRadius: '16px', border: '1px solid rgba(212, 175, 55, 0.3)', boxShadow: '0 10px 40px rgba(0, 242, 254, 0.15)' }}
+        />
+      </div>
+
       {/* --- Live Instrument Cluster --- */}
       <h2 className="font-serif-luxury" style={{ fontSize: '22px', color: '#fff', marginBottom: '16px' }}>
         ⚡ Live Cockpit Instrument Telemetry & Sound Engine
