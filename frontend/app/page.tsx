@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
-// API Host URL (Backend FastAPI)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 interface VehicleProfile {
@@ -10,6 +9,9 @@ interface VehicleProfile {
   driver_name: string;
   description: string;
   scenario: string;
+  model_name: string;
+  tagline: string;
+  specs: string;
 }
 
 interface ProblemSolution {
@@ -48,39 +50,87 @@ interface TelemetryPoint {
   maf_g_s: number;
 }
 
-export default function Dashboard() {
-  const [vehicles, setVehicles] = useState<VehicleProfile[]>([
-    { vehicle_id: 'VEHICLE_001', driver_name: 'Alice Smith', description: 'Gentle City Commuter', scenario: 'city_driving' },
-    { vehicle_id: 'VEHICLE_002', driver_name: 'Bob Johnson', description: 'Aggressive Sport Driver', scenario: 'aggressive_sport' },
-    { vehicle_id: 'VEHICLE_003', driver_name: 'Charlie Davis', description: 'High Temp Engine Fault', scenario: 'thermal_overheat' },
+export default function LuxuryDashboard() {
+  const [garage] = useState<VehicleProfile[]>([
+    {
+      vehicle_id: 'VEHICLE_001',
+      driver_name: 'Alice Smith',
+      description: 'Gentle City Commuter',
+      scenario: 'city_driving',
+      model_name: 'Phantom GT V12',
+      tagline: '6.0L Twin-Turbo Grand Tourer',
+      specs: '720 HP | 0-100 in 3.1s'
+    },
+    {
+      vehicle_id: 'VEHICLE_002',
+      driver_name: 'Bob Johnson',
+      description: 'Aggressive Track Driver',
+      scenario: 'aggressive_sport',
+      model_name: 'Apex Hyperion Track Special',
+      tagline: 'Quad-Motor Carbon Hypercar',
+      specs: '1450 HP | 0-100 in 1.9s'
+    },
+    {
+      vehicle_id: 'VEHICLE_003',
+      driver_name: 'Charlie Davis',
+      description: 'Thermal Overheat Test',
+      scenario: 'thermal_overheat',
+      model_name: 'Monaco RS V10',
+      tagline: 'Naturally Aspirated Track Weapon',
+      specs: '640 HP | Redline 8900 RPM'
+    }
   ]);
+
   const [selectedVehicle, setSelectedVehicle] = useState<string>('VEHICLE_001');
   const [health, setHealth] = useState<HealthData | null>(null);
   const [telemetry, setTelemetry] = useState<TelemetryPoint>({
-    rpm: 1250,
-    speed_kph: 45,
-    coolant_temp_c: 89,
-    battery_voltage: 14.1,
-    throttle_pos_pct: 18,
-    maf_g_s: 6.2,
+    rpm: 1850,
+    speed_kph: 85,
+    coolant_temp_c: 91,
+    battery_voltage: 14.2,
+    throttle_pos_pct: 24,
+    maf_g_s: 8.4
   });
 
-  // Selected solution modal state
   const [activeSolution, setActiveSolution] = useState<ProblemSolution | null>(null);
   const [showReportModal, setShowReportModal] = useState<boolean>(false);
   const [reportHtml, setReportHtml] = useState<string>('');
+  const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
 
-  // Fetch available vehicles list from backend
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/api/v1/vehicles`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.vehicles) setVehicles(data.vehicles);
-      })
-      .catch(err => console.warn('Vehicles fallback active:', err));
-  }, []);
+  // Audio Context Ref for V8 Engine Acoustic Sound Synthesizer
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const oscRef = useRef<OscillatorNode | null>(null);
 
-  // Poll backend API for selected driver profile health & telemetry
+  // Toggle Synthetic Engine Audio Soundscape
+  const toggleEngineSound = () => {
+    if (isAudioPlaying) {
+      if (oscRef.current) oscRef.current.stop();
+      setIsAudioPlaying(false);
+    } else {
+      try {
+        const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        const ctx = new AudioContextClass();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(40 + (telemetry.rpm / 100), ctx.currentTime);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        audioCtxRef.current = ctx;
+        oscRef.current = osc;
+        setIsAudioPlaying(true);
+      } catch (e) {
+        console.warn('Audio Synthesis not supported:', e);
+      }
+    }
+  };
+
+  // Poll backend API for selected hypercar telemetry & ML health
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -95,10 +145,15 @@ export default function Dashboard() {
           const telemJson = await telemRes.json();
           if (telemJson.data && telemJson.data.length > 0) {
             setTelemetry(telemJson.data[0]);
+
+            // Update acoustic pitch if engine audio is active
+            if (oscRef.current && audioCtxRef.current) {
+              oscRef.current.frequency.setValueAtTime(35 + (telemJson.data[0].rpm / 80), audioCtxRef.current.currentTime);
+            }
           }
         }
       } catch (err) {
-        console.warn('Backend server polling fallback active:', err);
+        console.warn('Backend server connection fallback active:', err);
       }
     };
 
@@ -107,7 +162,7 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [selectedVehicle]);
 
-  // Generate printable mechanic report for selected driver
+  // Generate printable mechanic report
   const handleGenerateReport = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/report?vehicle_id=${selectedVehicle}`);
@@ -117,258 +172,279 @@ export default function Dashboard() {
         setShowReportModal(true);
       }
     } catch (e) {
-      alert('Could not connect to backend to fetch report.');
+      alert('Could not fetch diagnostic report from backend.');
     }
   };
 
-  const activeProfile = vehicles.find(v => v.vehicle_id === selectedVehicle) || vehicles[0];
+  const activeCar = garage.find(c => c.vehicle_id === selectedVehicle) || garage[0];
 
   return (
-    <div style={{ padding: '28px', maxWidth: '1380px', margin: '0 auto' }}>
-      
-      {/* --- Futuristic Navigation Bar --- */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+    <div style={{ minHeight: '100vh', padding: '36px 48px', maxWidth: '1440px', margin: '0 auto' }}>
+
+      {/* --- Top Luxury Navigation Bar --- */}
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '36px', flexWrap: 'wrap', gap: '20px' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <h1 style={{ fontSize: '32px', fontWeight: 900, background: 'linear-gradient(135deg, #00f2fe, #4facfe)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.5px' }}>
-              ⚡ VehicleIQ
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <span style={{ fontSize: '32px' }}>👑</span>
+            <h1 className="font-serif-luxury text-gold-gradient" style={{ fontSize: '38px', fontWeight: 900, letterSpacing: '-0.5px' }}>
+              VEHICLE<span style={{ color: '#fff', fontStyle: 'italic' }}>IQ</span>
             </h1>
-            <span style={{ background: 'rgba(0, 242, 254, 0.12)', color: '#00f2fe', border: '1px solid rgba(0, 242, 254, 0.3)', padding: '5px 14px', borderRadius: '30px', fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="live-dot"></span> REAL-TIME AI TELEMETRY STREAM
+            <span style={{ background: 'rgba(212, 175, 55, 0.12)', color: '#d4af37', border: '1px solid rgba(212, 175, 55, 0.3)', padding: '6px 16px', borderRadius: '30px', fontSize: '11px', fontWeight: 800, letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="gold-beacon"></span> LUXURY AUTOMOTIVE INTELLIGENCE
             </span>
           </div>
-          <p style={{ color: '#94a3b8', fontSize: '14px', marginTop: '4px' }}>
-            Predictive component failure intelligence & automated repair solution guides
+          <p style={{ color: '#94a3b8', fontSize: '14px', marginTop: '6px' }}>
+            Next-Generation AI Telemetry & Executive Maintenance Butler
           </p>
         </div>
 
-        {/* Multi-Driver Profile Selector Dropdown */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ background: 'rgba(13, 18, 36, 0.9)', border: '1px solid rgba(0, 242, 254, 0.3)', borderRadius: '14px', padding: '8px 16px', boxShadow: '0 4px 20px rgba(0, 242, 254, 0.1)' }}>
-            <label style={{ color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', fontWeight: 700 }}>
-              Active Driver Profile
-            </label>
-            <select
-              value={selectedVehicle}
-              onChange={(e) => setSelectedVehicle(e.target.value)}
-              style={{ background: 'transparent', color: '#00f2fe', border: 'none', fontSize: '15px', fontWeight: 800, cursor: 'pointer', outline: 'none' }}
-            >
-              {vehicles.map((v) => (
-                <option key={v.vehicle_id} value={v.vehicle_id} style={{ background: '#070913', color: '#fff' }}>
-                  👤 {v.driver_name} ({v.description})
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Action Controls & Garage Selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          
+          {/* Audio Engine Acoustic Soundscape Toggle */}
+          <button
+            onClick={toggleEngineSound}
+            style={{ background: isAudioPlaying ? 'linear-gradient(135deg, #00f2fe, #4facfe)' : 'rgba(10, 14, 26, 0.8)', color: isAudioPlaying ? '#030408' : '#d4af37', border: '1px solid rgba(212, 175, 55, 0.4)', padding: '12px 20px', borderRadius: '16px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}
+          >
+            <span>{isAudioPlaying ? '🔊 Engine Acoustics Active' : '🎵 Synth Engine Acoustics'}</span>
+            {isAudioPlaying && (
+              <div style={{ display: 'flex', gap: '3px', alignItems: 'flex-end', height: '16px' }}>
+                <div className="audio-bar" style={{ animationDelay: '0s' }}></div>
+                <div className="audio-bar" style={{ animationDelay: '0.2s' }}></div>
+                <div className="audio-bar" style={{ animationDelay: '0.4s' }}></div>
+              </div>
+            )}
+          </button>
 
           <button
             onClick={handleGenerateReport}
-            style={{ background: 'linear-gradient(135deg, #4facfe, #00f2fe)', color: '#0f172a', border: 'none', padding: '14px 22px', borderRadius: '14px', fontWeight: 800, cursor: 'pointer', boxShadow: '0 6px 20px rgba(0, 242, 254, 0.3)', fontSize: '14px' }}
+            className="btn-gold-luxury"
           >
-            📋 Printable Mechanic Report
+            📜 Executive Diagnostic Certificate
           </button>
         </div>
       </header>
 
-      {/* --- Active Driver Profile Hero Banner --- */}
-      <div className="glass-panel" style={{ padding: '20px 28px', marginBottom: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', background: 'linear-gradient(135deg, rgba(13, 18, 36, 0.95), rgba(7, 9, 19, 0.95))' }}>
-        <div>
-          <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Monitored Vehicle & Driver Profile</span>
-          <h2 style={{ fontSize: '22px', color: '#f8fafc', fontWeight: 800, marginTop: '2px' }}>
-            {activeProfile.driver_name} <span style={{ color: '#00f2fe', fontSize: '16px', fontWeight: 500 }}>(ID: {activeProfile.vehicle_id})</span>
-          </h2>
-          <p style={{ fontSize: '13px', color: '#94a3b8', marginTop: '2px' }}>Operational Mode: <strong style={{ color: '#4facfe' }}>{activeProfile.description}</strong></p>
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-          <div style={{ textAlign: 'right' }}>
-            <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>AI Predicted Vehicle Health</span>
-            <div style={{ fontSize: '32px', fontWeight: 900, color: (health?.overall_health_score || 95) >= 80 ? '#43e97b' : (health?.overall_health_score || 95) >= 60 ? '#f6d365' : '#ff0844' }}>
-              {health?.overall_health_score || 95}%
+      {/* --- Executive Hypercar Showroom Selector Cards --- */}
+      <h2 className="font-serif-luxury" style={{ fontSize: '22px', color: '#fff', marginBottom: '16px' }}>
+        🏛️ Select Hypercar Garage Profile
+      </h2>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '36px' }}>
+        {garage.map((car) => {
+          const isSelected = car.vehicle_id === selectedVehicle;
+          return (
+            <div
+              key={car.vehicle_id}
+              onClick={() => setSelectedVehicle(car.vehicle_id)}
+              className="luxury-glass"
+              style={{
+                padding: '24px',
+                cursor: 'pointer',
+                border: isSelected ? '2px solid #d4af37' : '1px solid rgba(212, 175, 55, 0.15)',
+                background: isSelected ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.12), rgba(10, 14, 26, 0.9))' : 'rgba(10, 14, 26, 0.75)',
+                position: 'relative'
+              }}
+            >
+              {isSelected && (
+                <span style={{ position: 'absolute', top: '16px', right: '16px', background: '#d4af37', color: '#030408', fontSize: '10px', fontWeight: 900, padding: '3px 10px', borderRadius: '12px', textTransform: 'uppercase' }}>
+                  ACTIVE MONITORING
+                </span>
+              )}
+              <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
+                {car.driver_name} • {car.description}
+              </span>
+              <h3 className="font-serif-luxury" style={{ fontSize: '22px', color: isSelected ? '#f3e5ab' : '#fff', marginTop: '4px', fontWeight: 800 }}>
+                {car.model_name}
+              </h3>
+              <p style={{ fontSize: '13px', color: '#cbd5e1', marginTop: '2px' }}>{car.tagline}</p>
+              <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', color: '#d4af37', fontWeight: 700 }}>⚡ {car.specs}</span>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>ID: {car.vehicle_id}</span>
+              </div>
             </div>
-          </div>
-        </div>
+          );
+        })}
       </div>
 
-      {/* --- Section 1: Futuristic Speedometer & Tachometer Live Gauges --- */}
-      <h2 style={{ fontSize: '18px', color: '#f8fafc', marginBottom: '16px', fontWeight: 800 }}>⚡ Real-Time OBD-II Live Instrument Cluster</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+      {/* --- Live Telemetry Cockpit Instrument Cluster --- */}
+      <h2 className="font-serif-luxury" style={{ fontSize: '22px', color: '#fff', marginBottom: '16px' }}>
+        ⚡ Live Cockpit Instrument Telemetry & Sound Engine
+      </h2>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '20px', marginBottom: '36px' }}>
         
-        {/* Tachometer RPM Dial Card */}
-        <div className="glass-panel" style={{ padding: '20px', textAlign: 'center' }}>
-          <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>ENGINE RPM (TACHOMETER)</span>
-          <div style={{ position: 'relative', margin: '16px auto', width: '130px', height: '130px', borderRadius: '50%', background: 'radial-gradient(circle, #0d1224 60%, #1e293b 100%)', border: '3px solid rgba(0, 242, 254, 0.3)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', boxShadow: '0 0 20px rgba(0, 242, 254, 0.15)' }}>
-            <span style={{ fontSize: '30px', fontWeight: 900, color: telemetry.rpm > 3500 ? '#ff0844' : '#00f2fe' }}>
+        {/* Tachometer RPM Dial */}
+        <div className="luxury-glass" style={{ padding: '24px', textAlign: 'center' }}>
+          <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>TACHOMETER (ENGINE RPM)</span>
+          <div style={{ position: 'relative', margin: '20px auto 14px', width: '140px', height: '140px', borderRadius: '50%', background: 'radial-gradient(circle, #05050a 60%, rgba(212, 175, 55, 0.1) 100%)', border: '3px solid rgba(212, 175, 55, 0.4)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', boxShadow: '0 0 30px rgba(212, 175, 55, 0.2)' }}>
+            <span style={{ fontSize: '32px', fontWeight: 900, color: telemetry.rpm > 3500 ? '#ff0844' : '#d4af37' }}>
               {Math.round(telemetry.rpm)}
             </span>
-            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>RPM</span>
+            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700 }}>RPM</span>
           </div>
-          <div style={{ fontSize: '12px', color: '#64748b' }}>Limit: 7000 RPM</div>
+          <span style={{ fontSize: '12px', color: '#64748b' }}>Peak Torque: 4200 RPM</span>
         </div>
 
-        {/* Speedometer km/h Dial Card */}
-        <div className="glass-panel" style={{ padding: '20px', textAlign: 'center' }}>
-          <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>VEHICLE SPEEDOMETER</span>
-          <div style={{ position: 'relative', margin: '16px auto', width: '130px', height: '130px', borderRadius: '50%', background: 'radial-gradient(circle, #0d1224 60%, #1e293b 100%)', border: '3px solid rgba(67, 233, 123, 0.3)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', boxShadow: '0 0 20px rgba(67, 233, 123, 0.15)' }}>
-            <span style={{ fontSize: '30px', fontWeight: 900, color: '#43e97b' }}>
+        {/* Speedometer km/h Dial */}
+        <div className="luxury-glass" style={{ padding: '24px', textAlign: 'center' }}>
+          <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>SPEEDOMETER (KM/H)</span>
+          <div style={{ position: 'relative', margin: '20px auto 14px', width: '140px', height: '140px', borderRadius: '50%', background: 'radial-gradient(circle, #05050a 60%, rgba(0, 242, 254, 0.1) 100%)', border: '3px solid rgba(0, 242, 254, 0.4)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', boxShadow: '0 0 30px rgba(0, 242, 254, 0.2)' }}>
+            <span style={{ fontSize: '32px', fontWeight: 900, color: '#00f2fe' }}>
               {Math.round(telemetry.speed_kph)}
             </span>
-            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>KM/H</span>
+            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700 }}>KM/H</span>
           </div>
-          <div style={{ fontSize: '12px', color: '#64748b' }}>OBD ECU Stream</div>
+          <span style={{ fontSize: '12px', color: '#64748b' }}>Telemetry Tele-Stream</span>
         </div>
 
-        {/* Coolant Temperature Card */}
-        <div className="glass-panel" style={{ padding: '20px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>COOLANT TEMP</span>
-          <div style={{ fontSize: '36px', fontWeight: 900, color: telemetry.coolant_temp_c > 100 ? '#ff0844' : '#f6d365', margin: '12px 0' }}>
+        {/* Thermal Engine Temp */}
+        <div className="luxury-glass" style={{ padding: '24px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>COOLANT THERMAL TEMP</span>
+          <div style={{ fontSize: '38px', fontWeight: 900, color: telemetry.coolant_temp_c > 100 ? '#ff0844' : '#43e97b', margin: '14px 0' }}>
             {Math.round(telemetry.coolant_temp_c)}°C
           </div>
-          <div style={{ fontSize: '12px', color: '#94a3b8' }}>Optimal: 85°C - 95°C</div>
+          <span style={{ fontSize: '12px', color: '#94a3b8' }}>Optimal Operating Window: 85°C - 95°C</span>
         </div>
 
-        {/* Battery Voltage Monitor */}
-        <div className="glass-panel" style={{ padding: '20px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>CONTROL MODULE VOLTAGE</span>
-          <div style={{ fontSize: '36px', fontWeight: 900, color: telemetry.battery_voltage < 12.4 ? '#ff0844' : '#4facfe', margin: '12px 0' }}>
+        {/* Battery & Charging Voltage */}
+        <div className="luxury-glass" style={{ padding: '24px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>ALTERNATOR / BUS VOLTAGE</span>
+          <div style={{ fontSize: '38px', fontWeight: 900, color: telemetry.battery_voltage < 12.4 ? '#ff0844' : '#d4af37', margin: '14px 0' }}>
             {telemetry.battery_voltage} V
           </div>
-          <div style={{ fontSize: '12px', color: '#94a3b8' }}>Target: 13.8V - 14.4V</div>
+          <span style={{ fontSize: '12px', color: '#94a3b8' }}>Target: 13.8V - 14.4V</span>
         </div>
       </div>
 
-      {/* --- Section 2: AI Component Failure Degradation --- */}
-      <h2 style={{ fontSize: '18px', color: '#f8fafc', marginBottom: '16px', fontWeight: 800 }}>⚙️ AI Component Failure Degradation Predictions</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+      {/* --- Predictive Component Degradation Metrics --- */}
+      <h2 className="font-serif-luxury" style={{ fontSize: '22px', color: '#fff', marginBottom: '16px' }}>
+        🧠 AI Predictive Degradation & Health Forecasting
+      </h2>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '20px', marginBottom: '36px' }}>
         
-        {/* Brake Health */}
-        <div className="glass-panel" style={{ padding: '22px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '15px' }}>Brake System Pad Lifespan</span>
+        {/* Brake System */}
+        <div className="luxury-glass" style={{ padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <span style={{ fontWeight: 700, color: '#fff', fontSize: '15px' }}>Brake System Pad Lifespan</span>
             <span style={{ fontWeight: 900, fontSize: '18px', color: (health?.component_scores?.brake_health || 95) > 70 ? '#43e97b' : '#ff0844' }}>
               {health?.component_scores?.brake_health || 95}%
             </span>
           </div>
-          <div style={{ height: '10px', background: '#1e293b', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
+          <div style={{ height: '8px', background: '#1e293b', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
             <div style={{ height: '100%', width: `${health?.component_scores?.brake_health || 95}%`, background: (health?.component_scores?.brake_health || 95) > 70 ? 'linear-gradient(90deg, #43e97b, #38f9d7)' : 'linear-gradient(90deg, #ff0844, #ffb199)' }}></div>
           </div>
-          <div style={{ fontSize: '12px', color: '#94a3b8' }}>Friction Heat Rate: Normal</div>
+          <span style={{ fontSize: '12px', color: '#94a3b8' }}>Braking Friction Wear: Nominal</span>
         </div>
 
         {/* Engine Stress */}
-        <div className="glass-panel" style={{ padding: '22px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '15px' }}>Engine Thermal & Mechanical</span>
+        <div className="luxury-glass" style={{ padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <span style={{ fontWeight: 700, color: '#fff', fontSize: '15px' }}>Engine Thermal & Mechanical</span>
             <span style={{ fontWeight: 900, fontSize: '18px', color: (health?.component_scores?.engine_health || 94) > 70 ? '#43e97b' : '#ff0844' }}>
               {health?.component_scores?.engine_health || 94}%
             </span>
           </div>
-          <div style={{ height: '10px', background: '#1e293b', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
-            <div style={{ height: '100%', width: `${health?.component_scores?.engine_health || 94}%`, background: (health?.component_scores?.engine_health || 94) > 70 ? 'linear-gradient(90deg, #00f2fe, #4facfe)' : 'linear-gradient(90deg, #ff0844, #ffb199)' }}></div>
+          <div style={{ height: '8px', background: '#1e293b', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
+            <div style={{ height: '100%', width: `${health?.component_scores?.engine_health || 94}%`, background: (health?.component_scores?.engine_health || 94) > 70 ? 'linear-gradient(90deg, #d4af37, #f3e5ab)' : 'linear-gradient(90deg, #ff0844, #ffb199)' }}></div>
           </div>
-          <div style={{ fontSize: '12px', color: '#94a3b8' }}>Thermal Expansion Stress: Nominal</div>
+          <span style={{ fontSize: '12px', color: '#94a3b8' }}>Thermodynamic Expansion: Stable</span>
         </div>
 
         {/* Battery Health */}
-        <div className="glass-panel" style={{ padding: '22px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '15px' }}>Battery & Alternator Charging</span>
+        <div className="luxury-glass" style={{ padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <span style={{ fontWeight: 700, color: '#fff', fontSize: '15px' }}>Battery & Charging System</span>
             <span style={{ fontWeight: 900, fontSize: '18px', color: (health?.component_scores?.battery_health || 96) > 70 ? '#43e97b' : '#ff0844' }}>
               {health?.component_scores?.battery_health || 96}%
             </span>
           </div>
-          <div style={{ height: '10px', background: '#1e293b', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
-            <div style={{ height: '100%', width: `${health?.component_scores?.battery_health || 96}%`, background: (health?.component_scores?.battery_health || 96) > 70 ? 'linear-gradient(90deg, #4facfe, #6366f1)' : 'linear-gradient(90deg, #ff0844, #ffb199)' }}></div>
+          <div style={{ height: '8px', background: '#1e293b', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
+            <div style={{ height: '100%', width: `${health?.component_scores?.battery_health || 96}%`, background: (health?.component_scores?.battery_health || 96) > 70 ? 'linear-gradient(90deg, #00f2fe, #4facfe)' : 'linear-gradient(90deg, #ff0844, #ffb199)' }}></div>
           </div>
-          <div style={{ fontSize: '12px', color: '#94a3b8' }}>12V Cell Voltage Stability: Good</div>
-        </div>
-
-        {/* Driving Behavior Profile Card */}
-        <div className="glass-panel" style={{ padding: '22px', background: 'linear-gradient(135deg, rgba(13, 18, 36, 0.95), rgba(0, 242, 254, 0.05))' }}>
-          <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>DRIVING STYLE CLASSIFIER</span>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px' }}>
-            <div style={{ fontSize: '24px', fontWeight: 900, color: '#00f2fe' }}>
-              {health?.driving_style?.toUpperCase() || 'GENTLE'}
-            </div>
-            <div style={{ background: '#070913', padding: '6px 14px', borderRadius: '10px', border: '1px solid rgba(0, 242, 254, 0.3)', fontWeight: 800, color: '#43e97b', fontSize: '14px' }}>
-              Score: {health?.driving_behavior_score || 90}/100
-            </div>
-          </div>
+          <span style={{ fontSize: '12px', color: '#94a3b8' }}>12V Cell Voltage Stability: Good</span>
         </div>
       </div>
 
-      {/* --- Section 3: Diagnostic Problems & Step-by-Step Fix Solution Cards --- */}
-      <h2 style={{ fontSize: '18px', color: '#f8fafc', marginBottom: '16px', fontWeight: 800 }}>🔧 Diagnostic Problem Findings & Step-by-Step Repair Guides</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+      {/* --- Executive Diagnostic Findings & Step-by-Step Fix Guides --- */}
+      <h2 className="font-serif-luxury" style={{ fontSize: '22px', color: '#fff', marginBottom: '16px' }}>
+        🛠️ Executive Maintenance Butler & Step-by-Step Fix Solutions
+      </h2>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '36px' }}>
         {health?.plain_language_alerts?.map((alert, idx) => (
-          <div key={idx} className="glass-panel" style={{ padding: '22px', borderLeft: `6px solid ${alert.severity === 'CRITICAL' ? '#ff0844' : alert.severity === 'WARNING' ? '#f6d365' : '#4facfe'}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#f8fafc' }}>{alert.title}</h3>
-              <span className={alert.severity === 'CRITICAL' ? 'badge-critical' : alert.severity === 'WARNING' ? 'badge-warning' : 'badge-info'}>
-                {alert.severity}
+          <div key={idx} className="luxury-glass" style={{ padding: '26px', borderLeft: `6px solid ${alert.severity === 'CRITICAL' ? '#ff0844' : alert.severity === 'WARNING' ? '#d4af37' : '#00f2fe'}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
+              <h3 className="font-serif-luxury" style={{ fontSize: '20px', fontWeight: 800, color: '#fff' }}>{alert.title}</h3>
+              <span style={{ background: alert.severity === 'CRITICAL' ? 'linear-gradient(135deg, #ff0844, #ffb199)' : alert.severity === 'WARNING' ? 'linear-gradient(135deg, #d4af37, #aa771c)' : 'linear-gradient(135deg, #00f2fe, #4facfe)', color: '#030408', padding: '4px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: 900, letterSpacing: '0.5px' }}>
+                {alert.severity} SEVERITY
               </span>
             </div>
 
-            <p style={{ color: '#cbd5e1', fontSize: '14px', lineHeight: 1.6, marginBottom: '14px' }}>
-              <strong>Diagnostic Finding:</strong> {alert.explanation}
+            <p style={{ color: '#cbd5e1', fontSize: '14px', lineHeight: 1.6, marginBottom: '16px' }}>
+              <strong>Diagnostic Anomaly Finding:</strong> {alert.explanation}
             </p>
 
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setActiveSolution(alert)}
-                style={{ background: 'linear-gradient(135deg, #00f2fe, #4facfe)', color: '#0f172a', border: 'none', padding: '10px 18px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                🛠️ View DIY Repair Solution Guide & Cost
-              </button>
-            </div>
+            <button
+              onClick={() => setActiveSolution(alert)}
+              className="btn-gold-luxury"
+              style={{ fontSize: '13px', padding: '10px 20px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+            >
+              🛠️ View DIY Repair Solution Guide & Cost Breakdown
+            </button>
           </div>
         ))}
       </div>
 
-      {/* --- Section 4: Interactive Problem Solution Drawer / Modal --- */}
+      {/* --- DIY Solution Guide Modal --- */}
       {activeSolution && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-          <div style={{ background: '#0d1224', width: '100%', maxWidth: '750px', maxHeight: '90vh', borderRadius: '20px', overflowY: 'auto', border: '1px solid rgba(0, 242, 254, 0.4)', padding: '28px', boxShadow: '0 0 50px rgba(0, 242, 254, 0.2)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(3, 4, 8, 0.9)', zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+          <div className="luxury-glass" style={{ width: '100%', maxWidth: '780px', maxHeight: '90vh', overflowY: 'auto', padding: '32px', border: '1px solid #d4af37' }}>
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b', paddingBottom: '16px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(212, 175, 55, 0.2)', paddingBottom: '18px', marginBottom: '24px' }}>
               <div>
-                <span className={activeSolution.severity === 'CRITICAL' ? 'badge-critical' : activeSolution.severity === 'WARNING' ? 'badge-warning' : 'badge-info'}>
+                <span style={{ background: '#d4af37', color: '#030408', fontSize: '10px', fontWeight: 900, padding: '3px 10px', borderRadius: '10px', textTransform: 'uppercase' }}>
                   {activeSolution.severity} URGENCY
                 </span>
-                <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#f8fafc', marginTop: '6px' }}>{activeSolution.solution_title}</h2>
+                <h2 className="font-serif-luxury text-gold-gradient" style={{ fontSize: '24px', fontWeight: 900, marginTop: '8px' }}>
+                  {activeSolution.solution_title}
+                </h2>
               </div>
-              <button onClick={() => setActiveSolution(null)} style={{ background: '#ff0844', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 800 }}>Close</button>
+              <button onClick={() => setActiveSolution(null)} style={{ background: '#ff0844', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: '10px', cursor: 'pointer', fontWeight: 800 }}>Close</button>
             </div>
 
-            {/* Cost & Urgency Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '24px' }}>
-              <div style={{ background: '#1e293b', padding: '14px', borderRadius: '12px' }}>
+            {/* Cost & Urgency Metrics */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '28px' }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
                 <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>Estimated Repair Cost</span>
-                <div style={{ fontSize: '18px', fontWeight: 900, color: '#43e97b', marginTop: '4px' }}>{activeSolution.estimated_cost}</div>
+                <div style={{ fontSize: '20px', fontWeight: 900, color: '#43e97b', marginTop: '4px' }}>{activeSolution.estimated_cost}</div>
               </div>
-              <div style={{ background: '#1e293b', padding: '14px', borderRadius: '12px' }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
                 <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>Urgency Rating</span>
-                <div style={{ fontSize: '14px', fontWeight: 800, color: '#f6d365', marginTop: '4px' }}>{activeSolution.urgency}</div>
+                <div style={{ fontSize: '15px', fontWeight: 800, color: '#d4af37', marginTop: '4px' }}>{activeSolution.urgency}</div>
               </div>
             </div>
 
-            {/* Step-by-Step DIY Fix Steps */}
-            <h3 style={{ fontSize: '16px', color: '#00f2fe', marginBottom: '12px', fontWeight: 800 }}>🛠️ Step-by-Step DIY Repair Instructions:</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+            {/* DIY Step-by-Step Fix Instructions */}
+            <h3 className="font-serif-luxury" style={{ fontSize: '18px', color: '#00f2fe', marginBottom: '14px' }}>
+              🛠️ Step-by-Step DIY Repair Instructions:
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
               {activeSolution.diy_fix_steps?.map((step, sIdx) => (
-                <div key={sIdx} style={{ background: '#161e38', padding: '12px 16px', borderRadius: '10px', borderLeft: '4px solid #00f2fe', color: '#cbd5e1', fontSize: '14px' }}>
-                  <strong style={{ color: '#00f2fe' }}>Step {sIdx + 1}:</strong> {step}
+                <div key={sIdx} style={{ background: 'rgba(10, 14, 26, 0.9)', padding: '14px 18px', borderRadius: '12px', borderLeft: '4px solid #d4af37', color: '#cbd5e1', fontSize: '14px' }}>
+                  <strong style={{ color: '#d4af37' }}>Step {sIdx + 1}:</strong> {step}
                 </div>
               ))}
             </div>
 
-            {/* Recommended Parts List */}
+            {/* Recommended OEM Replacement Parts */}
             {activeSolution.parts_needed?.length > 0 && (
-              <div style={{ marginBottom: '24px' }}>
-                <h4 style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase', fontWeight: 700 }}>Recommended Replacement Parts:</h4>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{ marginBottom: '28px' }}>
+                <h4 style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase', fontWeight: 700 }}>Recommended OEM Replacement Parts:</h4>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   {activeSolution.parts_needed.map((part, pIdx) => (
-                    <span key={pIdx} style={{ background: '#1e293b', color: '#38bdf8', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+                    <span key={pIdx} style={{ background: 'rgba(212, 175, 55, 0.1)', color: '#f3e5ab', padding: '8px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: 700, border: '1px solid rgba(212, 175, 55, 0.3)' }}>
                       🔧 {part}
                     </span>
                   ))}
@@ -376,28 +452,29 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
-              <button onClick={() => alert('Mechanic service booking request sent!')} style={{ flex: 1, background: 'linear-gradient(135deg, #43e97b, #38f9d7)', color: '#0f172a', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: 900, cursor: 'pointer', fontSize: '15px' }}>
-                👨‍🔧 Book Local Certified Mechanic Service
+            <div style={{ display: 'flex', gap: '14px' }}>
+              <button onClick={() => alert('Master Concierge Mechanic dispatched to your location!')} className="btn-gold-luxury" style={{ flex: 1, padding: '16px', fontSize: '15px' }}>
+                👨‍🔧 Dispatch Official White-Glove Concierge Service
               </button>
             </div>
+
           </div>
         </div>
       )}
 
-      {/* --- Section 5: Printable Mechanic Report Modal --- */}
+      {/* --- Executive Report Modal --- */}
       {showReportModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-          <div style={{ background: '#070913', width: '100%', maxWidth: '850px', maxHeight: '90vh', borderRadius: '20px', overflowY: 'auto', border: '1px solid rgba(0, 242, 254, 0.4)', padding: '24px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(3, 4, 8, 0.9)', zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+          <div className="luxury-glass" style={{ width: '100%', maxWidth: '880px', maxHeight: '90vh', overflowY: 'auto', padding: '28px', border: '1px solid #d4af37' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '20px', color: '#00f2fe', fontWeight: 800 }}>Mechanic Diagnostic Summary for {activeProfile.driver_name}</h2>
-              <button onClick={() => setShowReportModal(false)} style={{ background: '#ff0844', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: 800 }}>Close</button>
+              <h2 className="font-serif-luxury text-gold-gradient" style={{ fontSize: '22px' }}>Executive Diagnostic Certificate — {activeCar.model_name}</h2>
+              <button onClick={() => setShowReportModal(false)} style={{ background: '#ff0844', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 800 }}>Close</button>
             </div>
             <div dangerouslySetInnerHTML={{ __html: reportHtml }} />
           </div>
         </div>
       )}
+
     </div>
   );
 }
