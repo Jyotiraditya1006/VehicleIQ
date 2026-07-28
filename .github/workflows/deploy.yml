@@ -25,15 +25,23 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Phase 1 Data Pipeline Unit Tests
+        env:
+          PYTHONPATH: .
         run: python test_pipeline.py
 
       - name: Run Phase 2 ML Model & Explainability Tests
+        env:
+          PYTHONPATH: .
         run: python test_phase2.py
 
       - name: Run Phase 3 FastAPI & Auth Tests
+        env:
+          PYTHONPATH: .
         run: python test_phase3.py
 
       - name: Run Phase 4 System Integration Tests
+        env:
+          PYTHONPATH: .
         run: python test_phase4.py
 
   deploy:
