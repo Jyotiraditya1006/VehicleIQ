@@ -57,7 +57,7 @@ interface ChatMessage {
   timestamp: string;
 }
 
-export default function LuxuryDashboard() {
+export default function LuxuryRedDashboard() {
   const [garage] = useState<VehicleProfile[]>([
     {
       vehicle_id: 'VEHICLE_001',
@@ -90,7 +90,10 @@ export default function LuxuryDashboard() {
 
   const [selectedVehicle, setSelectedVehicle] = useState<string>('VEHICLE_001');
 
-  // Vehicle-specific mock health fallbacks for smooth client interaction
+  // Red Racing Concept Showcase Tab State (Option 1, Option 2, Option 3)
+  const [activeConceptTab, setActiveConceptTab] = useState<'hud' | 'concierge' | 'mobile'>('hud');
+
+  // Vehicle-specific mock health fallbacks
   const vehicleHealthMap: Record<string, HealthData> = {
     'VEHICLE_001': {
       vehicle_id: 'VEHICLE_001',
@@ -195,7 +198,7 @@ export default function LuxuryDashboard() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       sender: 'ai',
-      text: 'Hello! I am your VehicleIQ AI Diagnostic Assistant. Describe any issue or symptom with your vehicle (e.g., "my brakes squeal", "coolant temp high", "battery light on"), and I will provide an instant AI diagnosis and step-by-step DIY fix guide!',
+      text: 'Greetings! I am your VehicleIQ Red Racing AI Repair Concierge. Describe any symptom or issue (e.g. "brakes squeal", "coolant temp high", "battery voltage drop"), and I will diagnose it instantly with step-by-step DIY fix guides!',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -204,12 +207,10 @@ export default function LuxuryDashboard() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
 
-  // Auto-scroll chat to bottom
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Handle Car Switch
   const handleCarSelect = (carId: string) => {
     setSelectedVehicle(carId);
     if (vehicleHealthMap[carId]) {
@@ -217,7 +218,6 @@ export default function LuxuryDashboard() {
     }
   };
 
-  // Toggle Synthetic Engine Audio
   const toggleEngineSound = () => {
     if (isAudioPlaying) {
       if (oscRef.current) oscRef.current.stop();
@@ -241,12 +241,11 @@ export default function LuxuryDashboard() {
         oscRef.current = osc;
         setIsAudioPlaying(true);
       } catch (e) {
-        console.warn('Audio Synthesis fallback:', e);
+        console.warn('Audio Synthesis fallback active:', e);
       }
     }
   };
 
-  // Poll backend API for selected hypercar
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -268,7 +267,7 @@ export default function LuxuryDashboard() {
           }
         }
       } catch (err) {
-        // Smooth local state fallback
+        // Local fallback
       }
     };
 
@@ -277,7 +276,6 @@ export default function LuxuryDashboard() {
     return () => clearInterval(interval);
   }, [selectedVehicle]);
 
-  // Handle User Chat Submission to AI Assistant
   const handleSendMessage = (textToSend?: string) => {
     const query = textToSend || chatInput;
     if (!query.trim()) return;
@@ -288,7 +286,6 @@ export default function LuxuryDashboard() {
     setMessages(prev => [...prev, userMsg]);
     if (!textToSend) setChatInput('');
 
-    // Intelligent AI Rule Engine Matching Symptoms
     setTimeout(() => {
       const qLower = query.toLowerCase();
       let aiText = "I analyzed your vehicle's telemetry log. Here is the diagnostic breakdown and recommended repair action:";
@@ -349,7 +346,7 @@ export default function LuxuryDashboard() {
         };
         aiText = `⚡ **Diagnostic Alert**: ${solutionObj.title}\n${solutionObj.explanation}`;
       } else {
-        aiText = `🔧 **AI Diagnostic Analysis**: No critical hardware fault detected for "${query}". Your overall vehicle health is ${health.overall_health_score}%. All sensor telemetry (RPM: ${Math.round(telemetry.rpm)}, Temp: ${Math.round(telemetry.coolant_temp_c)}°C, Voltage: ${telemetry.battery_voltage}V) is operating within safety thresholds.`;
+        aiText = `🔧 **AI Diagnostic Analysis**: No critical hardware fault detected for "${query}". Your overall vehicle health is ${health.overall_health_score}%. Sensor telemetry (RPM: ${Math.round(telemetry.rpm)}, Temp: ${Math.round(telemetry.coolant_temp_c)}°C, Voltage: ${telemetry.battery_voltage}V) operating normally.`;
       }
 
       setMessages(prev => [...prev, {
@@ -361,7 +358,6 @@ export default function LuxuryDashboard() {
     }, 600);
   };
 
-  // Generate printable mechanic report
   const handleGenerateReport = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/report?vehicle_id=${selectedVehicle}`);
@@ -371,7 +367,7 @@ export default function LuxuryDashboard() {
         setShowReportModal(true);
       }
     } catch (e) {
-      alert('Could not fetch report from backend server.');
+      alert('Could not fetch report from backend.');
     }
   };
 
@@ -380,16 +376,16 @@ export default function LuxuryDashboard() {
   return (
     <div style={{ minHeight: '100vh', padding: '32px 40px', maxWidth: '1440px', margin: '0 auto', background: '#000' }}>
 
-      {/* --- Top Luxury Header --- */}
+      {/* --- Top Red Racing Header --- */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '20px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <span style={{ fontSize: '32px' }}>👑</span>
-            <h1 className="brand-logo-font text-gold-gradient" style={{ fontSize: '38px', fontWeight: 900, letterSpacing: '2px' }}>
+            <span style={{ fontSize: '32px' }}>🏎️</span>
+            <h1 className="brand-logo-font text-red-gradient" style={{ fontSize: '38px', fontWeight: 900, letterSpacing: '2px' }}>
               VEHICLE<span className="brand-iq-font" style={{ color: '#00f2fe', fontStyle: 'normal', marginLeft: '4px' }}>IQ</span>
             </h1>
-            <span style={{ background: 'rgba(212, 175, 55, 0.12)', color: '#d4af37', border: '1px solid rgba(212, 175, 55, 0.3)', padding: '6px 16px', borderRadius: '30px', fontSize: '11px', fontWeight: 800, letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="gold-beacon"></span> LUXURY AUTOMOTIVE AI INTELLIGENCE
+            <span style={{ background: 'rgba(255, 8, 68, 0.12)', color: '#ff0844', border: '1px solid rgba(255, 8, 68, 0.4)', padding: '6px 16px', borderRadius: '30px', fontSize: '11px', fontWeight: 800, letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="red-beacon"></span> RED RACING AI TELEMETRY
             </span>
           </div>
           <p style={{ color: '#a1a1aa', fontSize: '14px', marginTop: '6px' }}>
@@ -409,23 +405,109 @@ export default function LuxuryDashboard() {
 
           <button
             onClick={toggleEngineSound}
-            style={{ background: isAudioPlaying ? 'linear-gradient(135deg, #00f2fe, #4facfe)' : 'rgba(18, 18, 18, 0.9)', color: isAudioPlaying ? '#000' : '#d4af37', border: '1px solid rgba(212, 175, 55, 0.4)', padding: '12px 20px', borderRadius: '16px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}
+            style={{ background: isAudioPlaying ? 'linear-gradient(135deg, #00f2fe, #4facfe)' : 'rgba(18, 18, 18, 0.9)', color: isAudioPlaying ? '#000' : '#ff0844', border: '1px solid rgba(255, 8, 68, 0.4)', padding: '12px 20px', borderRadius: '16px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}
           >
             <span>{isAudioPlaying ? '🔊 Engine Acoustics Active' : '🎵 Synth Engine Acoustics'}</span>
           </button>
 
-          <button onClick={handleGenerateReport} className="btn-gold-luxury">
+          <button onClick={handleGenerateReport} className="btn-red-luxury">
             📜 Printable Report
           </button>
         </div>
       </header>
+
+      {/* --- ALL STITCH AI DESIGN CONCEPT OPTIONS GALLERY --- */}
+      <div className="luxury-glass" style={{ padding: '24px', marginBottom: '36px', border: '1px solid rgba(255, 8, 68, 0.4)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <span style={{ fontSize: '11px', color: '#ff0844', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>STITCH AI DESIGN CONCEPT GALLERY</span>
+            <h3 className="font-serif-luxury" style={{ fontSize: '22px', color: '#fff', fontWeight: 800, marginTop: '2px' }}>
+              Red Racing Edition — All Design Concepts Showcase
+            </h3>
+          </div>
+
+          {/* 3 Option Selector Tabs */}
+          <div style={{ display: 'flex', gap: '10px', background: '#0a0a0f', padding: '6px', borderRadius: '16px', border: '1px solid rgba(255, 8, 68, 0.3)' }}>
+            <button
+              onClick={() => setActiveConceptTab('hud')}
+              style={{
+                background: activeConceptTab === 'hud' ? 'linear-gradient(135deg, #ff0844, #990022)' : 'transparent',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '12px',
+                fontWeight: 800,
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              🏎️ Option 1: 3D Cockpit HUD
+            </button>
+            <button
+              onClick={() => setActiveConceptTab('concierge')}
+              style={{
+                background: activeConceptTab === 'concierge' ? 'linear-gradient(135deg, #ff0844, #990022)' : 'transparent',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '12px',
+                fontWeight: 800,
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              🛠️ Option 2: AI Repair Drawer
+            </button>
+            <button
+              onClick={() => setActiveConceptTab('mobile')}
+              style={{
+                background: activeConceptTab === 'mobile' ? 'linear-gradient(135deg, #ff0844, #990022)' : 'transparent',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '12px',
+                fontWeight: 800,
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              📱 Option 3: Mobile Companion App
+            </button>
+          </div>
+        </div>
+
+        {/* Render Selected Concept Mockup */}
+        <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255, 8, 68, 0.3)' }}>
+          {activeConceptTab === 'hud' && (
+            <img
+              src="/hypercar_hud_mockup.jpg"
+              alt="Option 1: 3D Hypercar Digital Cockpit HUD Mockup"
+              style={{ width: '100%', maxHeight: '380px', objectFit: 'cover' }}
+            />
+          )}
+          {activeConceptTab === 'concierge' && (
+            <img
+              src="/ai_repair_drawer_mockup.jpg"
+              alt="Option 2: Executive AI Repair Drawer Mockup"
+              style={{ width: '100%', maxHeight: '380px', objectFit: 'cover' }}
+            />
+          )}
+          {activeConceptTab === 'mobile' && (
+            <img
+              src="/mobile_app_mockup.jpg"
+              alt="Option 3: Mobile Telemetry Companion App Mockup"
+              style={{ width: '100%', maxHeight: '380px', objectFit: 'cover' }}
+            />
+          )}
+        </div>
+      </div>
 
       {/* --- Executive Hypercar Showroom Selector Cards --- */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <h2 className="font-serif-luxury" style={{ fontSize: '22px', color: '#fff' }}>
           🏎️ Select Monitored Garage Vehicle Profile
         </h2>
-        <span style={{ fontSize: '12px', color: '#d4af37', fontWeight: 700 }}>Click any car card to switch active vehicle monitoring</span>
+        <span style={{ fontSize: '12px', color: '#ff0844', fontWeight: 700 }}>Click any car card to switch active vehicle monitoring</span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '36px' }}>
@@ -439,25 +521,25 @@ export default function LuxuryDashboard() {
               style={{
                 padding: '24px',
                 cursor: 'pointer',
-                border: isSelected ? '2px solid #d4af37' : '1px solid rgba(212, 175, 55, 0.15)',
-                background: isSelected ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(12, 12, 12, 0.95))' : 'rgba(12, 12, 12, 0.85)',
+                border: isSelected ? '2px solid #ff0844' : '1px solid rgba(255, 8, 68, 0.2)',
+                background: isSelected ? 'linear-gradient(135deg, rgba(255, 8, 68, 0.18), rgba(12, 12, 12, 0.95))' : 'rgba(12, 12, 12, 0.85)',
                 position: 'relative'
               }}
             >
               {isSelected && (
-                <span style={{ position: 'absolute', top: '16px', right: '16px', background: '#d4af37', color: '#000', fontSize: '10px', fontWeight: 900, padding: '3px 10px', borderRadius: '12px', textTransform: 'uppercase' }}>
+                <span style={{ position: 'absolute', top: '16px', right: '16px', background: '#ff0844', color: '#fff', fontSize: '10px', fontWeight: 900, padding: '3px 10px', borderRadius: '12px', textTransform: 'uppercase' }}>
                   ACTIVE MONITORING
                 </span>
               )}
               <span style={{ fontSize: '11px', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
                 {car.driver_name} • {car.description}
               </span>
-              <h3 className="font-serif-luxury" style={{ fontSize: '22px', color: isSelected ? '#f3e5ab' : '#fff', marginTop: '4px', fontWeight: 800 }}>
+              <h3 className="font-serif-luxury" style={{ fontSize: '22px', color: isSelected ? '#ff758c' : '#fff', marginTop: '4px', fontWeight: 800 }}>
                 {car.model_name}
               </h3>
               <p style={{ fontSize: '13px', color: '#cbd5e1', marginTop: '2px' }}>{car.tagline}</p>
               <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', color: '#d4af37', fontWeight: 700 }}>⚡ {car.specs}</span>
+                <span style={{ fontSize: '12px', color: '#ff0844', fontWeight: 700 }}>⚡ {car.specs}</span>
                 <span style={{ fontSize: '12px', color: '#a1a1aa' }}>ID: {car.vehicle_id}</span>
               </div>
             </div>
@@ -466,11 +548,11 @@ export default function LuxuryDashboard() {
       </div>
 
       {/* --- Active Monitored Vehicle Banner --- */}
-      <div className="luxury-glass" style={{ padding: '20px 28px', marginBottom: '36px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(12, 12, 12, 0.95))' }}>
+      <div className="luxury-glass" style={{ padding: '20px 28px', marginBottom: '36px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', background: 'linear-gradient(135deg, rgba(255, 8, 68, 0.12), rgba(12, 12, 12, 0.95))' }}>
         <div>
           <span style={{ fontSize: '11px', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Currently Monitored Vehicle</span>
           <h2 className="font-serif-luxury" style={{ fontSize: '24px', color: '#fff', fontWeight: 800, marginTop: '2px' }}>
-            {activeCar.model_name} <span style={{ color: '#d4af37', fontSize: '16px', fontWeight: 500 }}>(Driver: {activeCar.driver_name})</span>
+            {activeCar.model_name} <span style={{ color: '#ff0844', fontSize: '16px', fontWeight: 500 }}>(Driver: {activeCar.driver_name})</span>
           </h2>
           <p style={{ fontSize: '13px', color: '#a1a1aa', marginTop: '2px' }}>Operational Mode: <strong style={{ color: '#00f2fe' }}>{activeCar.description}</strong></p>
         </div>
@@ -478,31 +560,11 @@ export default function LuxuryDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           <div style={{ textAlign: 'right' }}>
             <span style={{ fontSize: '11px', color: '#a1a1aa', textTransform: 'uppercase', fontWeight: 700 }}>AI Predicted Vehicle Health</span>
-            <div style={{ fontSize: '36px', fontWeight: 900, color: health.overall_health_score >= 80 ? '#43e97b' : health.overall_health_score >= 60 ? '#d4af37' : '#ff0844' }}>
+            <div style={{ fontSize: '36px', fontWeight: 900, color: health.overall_health_score >= 80 ? '#43e97b' : health.overall_health_score >= 60 ? '#ff758c' : '#ff0844' }}>
               {health.overall_health_score}%
             </div>
           </div>
         </div>
-      </div>
-
-      {/* --- 3D Hypercar HUD Concept Showcase --- */}
-      <div className="luxury-glass" style={{ padding: '24px', marginBottom: '36px', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-          <div>
-            <span style={{ fontSize: '11px', color: '#d4af37', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>STITCH AI DESIGN CONCEPT</span>
-            <h3 className="font-serif-luxury" style={{ fontSize: '20px', color: '#fff', fontWeight: 800, marginTop: '2px' }}>
-              3D Hypercar Cockpit & Telemetry HUD Wireframe
-            </h3>
-          </div>
-          <span style={{ background: 'rgba(0, 242, 254, 0.12)', color: '#00f2fe', padding: '4px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>
-            PIXEL-PERFECT CONCEPT
-          </span>
-        </div>
-        <img
-          src="/hypercar_hud_mockup.jpg"
-          alt="3D Hypercar Digital Dashboard HUD Mockup"
-          style={{ width: '100%', maxHeight: '340px', objectFit: 'cover', borderRadius: '16px', border: '1px solid rgba(212, 175, 55, 0.3)', boxShadow: '0 10px 40px rgba(0, 242, 254, 0.15)' }}
-        />
       </div>
 
       {/* --- Live Instrument Cluster --- */}
@@ -515,8 +577,8 @@ export default function LuxuryDashboard() {
         {/* Tachometer RPM Dial */}
         <div className="luxury-glass" style={{ padding: '24px', textAlign: 'center' }}>
           <span style={{ fontSize: '11px', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>TACHOMETER (ENGINE RPM)</span>
-          <div style={{ position: 'relative', margin: '20px auto 14px', width: '140px', height: '140px', borderRadius: '50%', background: 'radial-gradient(circle, #000 60%, rgba(212, 175, 55, 0.1) 100%)', border: '3px solid rgba(212, 175, 55, 0.4)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', boxShadow: '0 0 30px rgba(212, 175, 55, 0.2)' }}>
-            <span style={{ fontSize: '32px', fontWeight: 900, color: telemetry.rpm > 3500 ? '#ff0844' : '#d4af37' }}>
+          <div style={{ position: 'relative', margin: '20px auto 14px', width: '140px', height: '140px', borderRadius: '50%', background: 'radial-gradient(circle, #000 60%, rgba(255, 8, 68, 0.1) 100%)', border: '3px solid rgba(255, 8, 68, 0.5)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', boxShadow: '0 0 30px rgba(255, 8, 68, 0.25)' }}>
+            <span style={{ fontSize: '32px', fontWeight: 900, color: '#ff0844' }}>
               {Math.round(telemetry.rpm)}
             </span>
             <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: 700 }}>RPM</span>
@@ -548,7 +610,7 @@ export default function LuxuryDashboard() {
         {/* Battery & Charging Voltage */}
         <div className="luxury-glass" style={{ padding: '24px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <span style={{ fontSize: '11px', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>ALTERNATOR / BUS VOLTAGE</span>
-          <div style={{ fontSize: '38px', fontWeight: 900, color: telemetry.battery_voltage < 12.4 ? '#ff0844' : '#d4af37', margin: '14px 0' }}>
+          <div style={{ fontSize: '38px', fontWeight: 900, color: telemetry.battery_voltage < 12.4 ? '#ff0844' : '#ff758c', margin: '14px 0' }}>
             {telemetry.battery_voltage} V
           </div>
           <span style={{ fontSize: '12px', color: '#a1a1aa' }}>Target: 13.8V - 14.4V</span>
@@ -585,7 +647,7 @@ export default function LuxuryDashboard() {
             </span>
           </div>
           <div style={{ height: '8px', background: '#1e293b', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
-            <div style={{ height: '100%', width: `${health.component_scores.engine_health}%`, background: health.component_scores.engine_health > 70 ? 'linear-gradient(90deg, #d4af37, #f3e5ab)' : 'linear-gradient(90deg, #ff0844, #ffb199)' }}></div>
+            <div style={{ height: '100%', width: `${health.component_scores.engine_health}%`, background: health.component_scores.engine_health > 70 ? 'linear-gradient(90deg, #ff0844, #ff758c)' : 'linear-gradient(90deg, #ff0844, #ffb199)' }}></div>
           </div>
           <span style={{ fontSize: '12px', color: '#a1a1aa' }}>Thermodynamic Expansion: Stable</span>
         </div>
@@ -612,10 +674,10 @@ export default function LuxuryDashboard() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '36px' }}>
         {health.plain_language_alerts?.map((alert, idx) => (
-          <div key={idx} className="luxury-glass" style={{ padding: '26px', borderLeft: `6px solid ${alert.severity === 'CRITICAL' ? '#ff0844' : alert.severity === 'WARNING' ? '#d4af37' : '#00f2fe'}` }}>
+          <div key={idx} className="luxury-glass" style={{ padding: '26px', borderLeft: `6px solid ${alert.severity === 'CRITICAL' ? '#ff0844' : alert.severity === 'WARNING' ? '#ff758c' : '#00f2fe'}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
               <h3 className="font-serif-luxury" style={{ fontSize: '20px', fontWeight: 800, color: '#fff' }}>{alert.title}</h3>
-              <span style={{ background: alert.severity === 'CRITICAL' ? 'linear-gradient(135deg, #ff0844, #ffb199)' : alert.severity === 'WARNING' ? 'linear-gradient(135deg, #d4af37, #aa771c)' : 'linear-gradient(135deg, #00f2fe, #4facfe)', color: '#000', padding: '4px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: 900, letterSpacing: '0.5px' }}>
+              <span style={{ background: alert.severity === 'CRITICAL' ? 'linear-gradient(135deg, #ff0844, #990022)' : alert.severity === 'WARNING' ? 'linear-gradient(135deg, #ff758c, #ff0844)' : 'linear-gradient(135deg, #00f2fe, #4facfe)', color: '#fff', padding: '4px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: 900, letterSpacing: '0.5px' }}>
                 {alert.severity} SEVERITY
               </span>
             </div>
@@ -626,7 +688,7 @@ export default function LuxuryDashboard() {
 
             <button
               onClick={() => setActiveSolution(alert)}
-              className="btn-gold-luxury"
+              className="btn-red-luxury"
               style={{ fontSize: '13px', padding: '10px 20px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
             >
               🛠️ View DIY Repair Solution Guide & Cost Breakdown
@@ -637,14 +699,14 @@ export default function LuxuryDashboard() {
 
       {/* --- Interactive AI Repair Assistant Floating Chatbot Widget --- */}
       {isChatOpen && (
-        <div style={{ position: 'fixed', bottom: '24px', right: '24px', width: '420px', height: '560px', background: '#08080c', border: '2px solid #d4af37', borderRadius: '24px', zIndex: 3000, display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0, 242, 254, 0.25)', overflow: 'hidden' }}>
+        <div style={{ position: 'fixed', bottom: '24px', right: '24px', width: '420px', height: '560px', background: '#08080c', border: '2px solid #ff0844', borderRadius: '24px', zIndex: 3000, display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(255, 8, 68, 0.3)', overflow: 'hidden' }}>
           
           {/* Chat Header */}
-          <div style={{ background: 'linear-gradient(135deg, #0f1424, #08080c)', padding: '18px 20px', borderBottom: '1px solid rgba(212, 175, 55, 0.3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ background: 'linear-gradient(135deg, #18080c, #08080c)', padding: '18px 20px', borderBottom: '1px solid rgba(255, 8, 68, 0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ fontSize: '20px' }}>🤖</span>
               <div>
-                <h3 className="font-serif-luxury text-gold-gradient" style={{ fontSize: '16px', fontWeight: 800 }}>VehicleIQ AI Repair Concierge</h3>
+                <h3 className="font-serif-luxury text-red-gradient" style={{ fontSize: '16px', fontWeight: 800 }}>VehicleIQ AI Repair Concierge</h3>
                 <span style={{ fontSize: '11px', color: '#43e97b', fontWeight: 700 }}>● Live Telemetry Diagnostics Active</span>
               </div>
             </div>
@@ -653,10 +715,10 @@ export default function LuxuryDashboard() {
 
           {/* Quick Suggestion Chips */}
           <div style={{ padding: '10px 14px', background: '#0a0a0f', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '8px', overflowX: 'auto' }}>
-            <button onClick={() => handleSendMessage('My brakes squeal')} style={{ background: 'rgba(212, 175, 55, 0.12)', color: '#f3e5ab', border: '1px solid rgba(212, 175, 55, 0.3)', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', whiteSpace: 'nowrap', cursor: 'pointer' }}>
+            <button onClick={() => handleSendMessage('My brakes squeal')} style={{ background: 'rgba(255, 8, 68, 0.15)', color: '#ff758c', border: '1px solid rgba(255, 8, 68, 0.4)', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', whiteSpace: 'nowrap', cursor: 'pointer' }}>
               🛑 Squealing Brakes
             </button>
-            <button onClick={() => handleSendMessage('Engine temperature rose to 105C')} style={{ background: 'rgba(255, 8, 68, 0.12)', color: '#ffb199', border: '1px solid rgba(255, 8, 68, 0.3)', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', whiteSpace: 'nowrap', cursor: 'pointer' }}>
+            <button onClick={() => handleSendMessage('Engine temperature rose to 105C')} style={{ background: 'rgba(255, 8, 68, 0.15)', color: '#ffb199', border: '1px solid rgba(255, 8, 68, 0.4)', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', whiteSpace: 'nowrap', cursor: 'pointer' }}>
               🔥 Engine Overheat
             </button>
             <button onClick={() => handleSendMessage('Battery voltage dropped')} style={{ background: 'rgba(0, 242, 254, 0.12)', color: '#00f2fe', border: '1px solid rgba(0, 242, 254, 0.3)', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', whiteSpace: 'nowrap', cursor: 'pointer' }}>
@@ -669,13 +731,13 @@ export default function LuxuryDashboard() {
             {messages.map((msg, index) => (
               <div key={index} style={{ alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
                 <div style={{
-                  background: msg.sender === 'user' ? 'linear-gradient(135deg, #d4af37, #aa771c)' : '#12121a',
-                  color: msg.sender === 'user' ? '#000' : '#f8fafc',
+                  background: msg.sender === 'user' ? 'linear-gradient(135deg, #ff0844, #990022)' : '#12121a',
+                  color: '#ffffff',
                   padding: '12px 16px',
                   borderRadius: '16px',
                   fontSize: '13px',
                   lineHeight: 1.5,
-                  border: msg.sender === 'ai' ? '1px solid rgba(212, 175, 55, 0.2)' : 'none',
+                  border: msg.sender === 'ai' ? '1px solid rgba(255, 8, 68, 0.3)' : 'none',
                   boxShadow: '0 4px 15px rgba(0,0,0,0.5)'
                 }}>
                   {msg.text}
@@ -701,18 +763,18 @@ export default function LuxuryDashboard() {
           </div>
 
           {/* Chat Input Bar */}
-          <div style={{ padding: '14px', background: '#0c0c12', borderTop: '1px solid rgba(212, 175, 55, 0.2)', display: 'flex', gap: '10px' }}>
+          <div style={{ padding: '14px', background: '#0c0c12', borderTop: '1px solid rgba(255, 8, 68, 0.3)', display: 'flex', gap: '10px' }}>
             <input
               type="text"
               placeholder="Type your vehicle issue or error code..."
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-              style={{ flex: 1, background: '#181824', color: '#fff', border: '1px solid rgba(212, 175, 55, 0.3)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', outline: 'none' }}
+              style={{ flex: 1, background: '#181824', color: '#fff', border: '1px solid rgba(255, 8, 68, 0.4)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', outline: 'none' }}
             />
             <button
               onClick={() => handleSendMessage()}
-              style={{ background: 'linear-gradient(135deg, #d4af37, #aa771c)', color: '#000', border: 'none', padding: '10px 18px', borderRadius: '12px', fontWeight: 900, cursor: 'pointer' }}
+              style={{ background: 'linear-gradient(135deg, #ff0844, #990022)', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: '12px', fontWeight: 900, cursor: 'pointer' }}
             >
               Send
             </button>
@@ -723,14 +785,14 @@ export default function LuxuryDashboard() {
       {/* --- DIY Solution Guide Modal --- */}
       {activeSolution && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.92)', zIndex: 4000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-          <div className="luxury-glass" style={{ width: '100%', maxWidth: '780px', maxHeight: '90vh', overflowY: 'auto', padding: '32px', border: '1px solid #d4af37', background: '#0a0a0f' }}>
+          <div className="luxury-glass" style={{ width: '100%', maxWidth: '780px', maxHeight: '90vh', overflowY: 'auto', padding: '32px', border: '1px solid #ff0844', background: '#0a0a0f' }}>
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(212, 175, 55, 0.2)', paddingBottom: '18px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 8, 68, 0.3)', paddingBottom: '18px', marginBottom: '24px' }}>
               <div>
-                <span style={{ background: '#d4af37', color: '#000', fontSize: '10px', fontWeight: 900, padding: '3px 10px', borderRadius: '10px', textTransform: 'uppercase' }}>
+                <span style={{ background: '#ff0844', color: '#fff', fontSize: '10px', fontWeight: 900, padding: '3px 10px', borderRadius: '10px', textTransform: 'uppercase' }}>
                   {activeSolution.severity} URGENCY
                 </span>
-                <h2 className="font-serif-luxury text-gold-gradient" style={{ fontSize: '24px', fontWeight: 900, marginTop: '8px' }}>
+                <h2 className="font-serif-luxury text-red-gradient" style={{ fontSize: '24px', fontWeight: 900, marginTop: '8px' }}>
                   {activeSolution.solution_title}
                 </h2>
               </div>
@@ -739,13 +801,13 @@ export default function LuxuryDashboard() {
 
             {/* Cost & Urgency Metrics */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '28px' }}>
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(255, 8, 68, 0.3)' }}>
                 <span style={{ fontSize: '11px', color: '#a1a1aa', textTransform: 'uppercase', fontWeight: 700 }}>Estimated Repair Cost</span>
                 <div style={{ fontSize: '20px', fontWeight: 900, color: '#43e97b', marginTop: '4px' }}>{activeSolution.estimated_cost}</div>
               </div>
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(255, 8, 68, 0.3)' }}>
                 <span style={{ fontSize: '11px', color: '#a1a1aa', textTransform: 'uppercase', fontWeight: 700 }}>Urgency Rating</span>
-                <div style={{ fontSize: '15px', fontWeight: 800, color: '#d4af37', marginTop: '4px' }}>{activeSolution.urgency}</div>
+                <div style={{ fontSize: '15px', fontWeight: 800, color: '#ff758c', marginTop: '4px' }}>{activeSolution.urgency}</div>
               </div>
             </div>
 
@@ -755,8 +817,8 @@ export default function LuxuryDashboard() {
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
               {activeSolution.diy_fix_steps?.map((step, sIdx) => (
-                <div key={sIdx} style={{ background: 'rgba(18, 18, 28, 0.9)', padding: '14px 18px', borderRadius: '12px', borderLeft: '4px solid #d4af37', color: '#cbd5e1', fontSize: '14px' }}>
-                  <strong style={{ color: '#d4af37' }}>Step {sIdx + 1}:</strong> {step}
+                <div key={sIdx} style={{ background: 'rgba(18, 18, 28, 0.9)', padding: '14px 18px', borderRadius: '12px', borderLeft: '4px solid #ff0844', color: '#cbd5e1', fontSize: '14px' }}>
+                  <strong style={{ color: '#ff758c' }}>Step {sIdx + 1}:</strong> {step}
                 </div>
               ))}
             </div>
@@ -767,7 +829,7 @@ export default function LuxuryDashboard() {
                 <h4 style={{ fontSize: '13px', color: '#a1a1aa', marginBottom: '10px', textTransform: 'uppercase', fontWeight: 700 }}>Recommended OEM Replacement Parts:</h4>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   {activeSolution.parts_needed.map((part, pIdx) => (
-                    <span key={pIdx} style={{ background: 'rgba(212, 175, 55, 0.1)', color: '#f3e5ab', padding: '8px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: 700, border: '1px solid rgba(212, 175, 55, 0.3)' }}>
+                    <span key={pIdx} style={{ background: 'rgba(255, 8, 68, 0.15)', color: '#ff758c', padding: '8px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: 700, border: '1px solid rgba(255, 8, 68, 0.4)' }}>
                       🔧 {part}
                     </span>
                   ))}
@@ -776,7 +838,7 @@ export default function LuxuryDashboard() {
             )}
 
             <div style={{ display: 'flex', gap: '14px' }}>
-              <button onClick={() => alert('Master Concierge Mechanic dispatched to your location!')} className="btn-gold-luxury" style={{ flex: 1, padding: '16px', fontSize: '15px' }}>
+              <button onClick={() => alert('Master Concierge Mechanic dispatched to your location!')} className="btn-red-luxury" style={{ flex: 1, padding: '16px', fontSize: '15px' }}>
                 👨‍🔧 Dispatch Official White-Glove Concierge Service
               </button>
             </div>
@@ -788,9 +850,9 @@ export default function LuxuryDashboard() {
       {/* --- Executive Report Modal --- */}
       {showReportModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.92)', zIndex: 4000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-          <div className="luxury-glass" style={{ width: '100%', maxWidth: '880px', maxHeight: '90vh', overflowY: 'auto', padding: '28px', border: '1px solid #d4af37', background: '#0a0a0f' }}>
+          <div className="luxury-glass" style={{ width: '100%', maxWidth: '880px', maxHeight: '90vh', overflowY: 'auto', padding: '28px', border: '1px solid #ff0844', background: '#0a0a0f' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <h2 className="font-serif-luxury text-gold-gradient" style={{ fontSize: '22px' }}>Executive Diagnostic Certificate — {activeCar.model_name}</h2>
+              <h2 className="font-serif-luxury text-red-gradient" style={{ fontSize: '22px' }}>Executive Diagnostic Certificate — {activeCar.model_name}</h2>
               <button onClick={() => setShowReportModal(false)} style={{ background: '#ff0844', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 800 }}>Close</button>
             </div>
             <div dangerouslySetInnerHTML={{ __html: reportHtml }} />

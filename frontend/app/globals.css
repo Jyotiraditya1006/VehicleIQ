@@ -3,10 +3,10 @@
 :root {
   --bg-dark: #000000;
   --panel-bg: rgba(12, 12, 12, 0.92);
-  --panel-border: rgba(212, 175, 55, 0.25);
-  --gold-primary: #d4af37;
-  --gold-glow: rgba(212, 175, 55, 0.4);
-  --gold-light: #f3e5ab;
+  --panel-border: rgba(255, 8, 68, 0.3);
+  --red-primary: #ff0844;
+  --red-glow: rgba(255, 8, 68, 0.45);
+  --red-light: #ff758c;
   --cyan-neon: #00f2fe;
   --crimson-alert: #ff0844;
   --emerald-safe: #43e97b;
@@ -46,7 +46,7 @@ body {
   font-family: 'Playfair Display', Georgia, serif;
 }
 
-/* Pitch Black Luxury Glass Panel */
+/* Pitch Black Red Racing Glass Panel */
 .luxury-glass {
   background: var(--panel-bg);
   backdrop-filter: blur(20px);
@@ -58,14 +58,14 @@ body {
 }
 
 .luxury-glass:hover {
-  border-color: rgba(212, 175, 55, 0.55);
-  box-shadow: 0 25px 70px rgba(212, 175, 55, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 8, 68, 0.7);
+  box-shadow: 0 25px 70px rgba(255, 8, 68, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.15);
   transform: translateY(-3px);
 }
 
-/* Gold Gradient Text */
-.text-gold-gradient {
-  background: linear-gradient(135deg, #fff7ad 0%, #d4af37 50%, #aa771c 100%);
+/* Red Gradient Text */
+.text-red-gradient {
+  background: linear-gradient(135deg, #ff758c 0%, #ff0844 50%, #990022 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -77,19 +77,19 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* Pulsing Ambient Beacon */
-@keyframes gold-beacon-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.8); }
-  70% { box-shadow: 0 0 0 14px rgba(212, 175, 55, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+/* Pulsing Ambient Red Beacon */
+@keyframes red-beacon-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 8, 68, 0.8); }
+  70% { box-shadow: 0 0 0 14px rgba(255, 8, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 8, 68, 0); }
 }
 
-.gold-beacon {
+.red-beacon {
   width: 10px;
   height: 10px;
-  background-color: var(--gold-primary);
+  background-color: var(--red-primary);
   border-radius: 50%;
-  animation: gold-beacon-pulse 2.2s infinite;
+  animation: red-beacon-pulse 2.2s infinite;
   display: inline-block;
 }
 
@@ -101,28 +101,28 @@ body {
 
 .audio-bar {
   width: 4px;
-  background: linear-gradient(180deg, #00f2fe, #d4af37);
+  background: linear-gradient(180deg, #00f2fe, #ff0844);
   border-radius: 4px;
   animation: bar-bounce 1.2s ease-in-out infinite;
 }
 
-/* Luxury Button */
-.btn-gold-luxury {
-  background: linear-gradient(135deg, #d4af37 0%, #aa771c 100%);
-  color: #000000;
+/* Red Racing Button */
+.btn-red-luxury {
+  background: linear-gradient(135deg, #ff0844 0%, #990022 100%);
+  color: #ffffff;
   border: none;
   padding: 14px 28px;
   border-radius: 16px;
   font-weight: 800;
   letter-spacing: 0.5px;
   cursor: pointer;
-  box-shadow: 0 8px 30px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 8px 30px rgba(255, 8, 68, 0.35);
   transition: all 0.3s ease;
 }
 
-.btn-gold-luxury:hover {
-  background: linear-gradient(135deg, #f3e5ab 0%, #d4af37 100%);
-  box-shadow: 0 12px 40px rgba(212, 175, 55, 0.5);
+.btn-red-luxury:hover {
+  background: linear-gradient(135deg, #ff758c 0%, #ff0844 100%);
+  box-shadow: 0 12px 40px rgba(255, 8, 68, 0.55);
   transform: translateY(-2px);
 }
 
@@ -134,6 +134,6 @@ body {
   background: #000000;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.4);
+  background: rgba(255, 8, 68, 0.5);
   border-radius: 3px;
 }
