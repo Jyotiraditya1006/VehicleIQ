@@ -203,45 +203,57 @@ export default function LuxuryRedDashboard() {
     }
   ]);
 
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const oscRef = useRef<OscillatorNode | null>(null);
+  const subOscRef = useRef<OscillatorNode | null>(null);
+  const filterRef = useRef<BiquadFilterNode | null>(null);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const handleCarSelect = (carId: string) => {
-    setSelectedVehicle(carId);
-    if (vehicleHealthMap[carId]) {
-      setHealth(vehicleHealthMap[carId]);
-    }
-  };
-
+  // --- Lamborghini Aventador 6.5L V12 Sound Engine Synthesizer ---
   const toggleEngineSound = () => {
     if (isAudioPlaying) {
       if (oscRef.current) oscRef.current.stop();
+      if (subOscRef.current) subOscRef.current.stop();
       setIsAudioPlaying(false);
     } else {
       try {
         const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
         const ctx = new AudioContextClass();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
 
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(40 + (telemetry.rpm / 100), ctx.currentTime);
-        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        // 1. Primary Screaming V12 Sawtooth Oscillator (High Manifold Exhaust Note)
+        const osc1 = ctx.createOscillator();
+        osc1.type = 'sawtooth';
+        const v12Freq = Math.max(80, (telemetry.rpm / 10)); // V12 6-pulse firing formula
+        osc1.frequency.setValueAtTime(v12Freq, ctx.currentTime);
 
-        osc.connect(gain);
-        gain.connect(ctx.destination);
+        // 2. Secondary Sub-Bass Triangle Oscillator (12-Cylinder Engine Block Sub-Rumble)
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(v12Freq * 0.5, ctx.currentTime);
 
-        osc.start();
+        // 3. Resonant Intake & Exhaust Biquad Filter (Simulates Aventador Air Intake Plenum Sweep)
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(v12Freq * 3.5, ctx.currentTime);
+        filter.Q.setValueAtTime(6.0, ctx.currentTime); // High acoustic resonance Q-factor
+
+        // 4. Master Gain Control
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(0.12, ctx.currentTime);
+
+        // Connect audio graph
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        osc1.start();
+        osc2.start();
+
         audioCtxRef.current = ctx;
-        oscRef.current = osc;
+        oscRef.current = osc1;
+        subOscRef.current = osc2;
+        filterRef.current = filter;
         setIsAudioPlaying(true);
       } catch (e) {
-        console.warn('Audio Synthesis fallback active:', e);
+        console.warn('V12 Audio Synthesis fallback active:', e);
       }
     }
   };
@@ -259,10 +271,15 @@ export default function LuxuryRedDashboard() {
         if (telemRes.ok) {
           const telemJson = await telemRes.json();
           if (telemJson.data && telemJson.data.length > 0) {
-            setTelemetry(telemJson.data[0]);
+            const currentTelem = telemJson.data[0];
+            setTelemetry(currentTelem);
 
-            if (oscRef.current && audioCtxRef.current) {
-              oscRef.current.frequency.setValueAtTime(35 + (telemJson.data[0].rpm / 80), audioCtxRef.current.currentTime);
+            // Dynamically sweep Aventador V12 Screaming Frequency & Filter with live RPM
+            if (oscRef.current && subOscRef.current && filterRef.current && audioCtxRef.current) {
+              const liveV12Freq = Math.max(80, (currentTelem.rpm / 10));
+              oscRef.current.frequency.setValueAtTime(liveV12Freq, audioCtxRef.current.currentTime);
+              subOscRef.current.frequency.setValueAtTime(liveV12Freq * 0.5, audioCtxRef.current.currentTime);
+              filterRef.current.frequency.setValueAtTime(liveV12Freq * 3.8, audioCtxRef.current.currentTime);
             }
           }
         }
@@ -407,7 +424,7 @@ export default function LuxuryRedDashboard() {
             onClick={toggleEngineSound}
             style={{ background: isAudioPlaying ? 'linear-gradient(135deg, #00f2fe, #4facfe)' : 'rgba(18, 18, 18, 0.9)', color: isAudioPlaying ? '#000' : '#ff0844', border: '1px solid rgba(255, 8, 68, 0.4)', padding: '12px 20px', borderRadius: '16px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}
           >
-            <span>{isAudioPlaying ? '🔊 Engine Acoustics Active' : '🎵 Synth Engine Acoustics'}</span>
+            <span>{isAudioPlaying ? '🔊 Aventador V12 Screaming Active' : '🎵 Synth Aventador V12 Acoustics'}</span>
           </button>
 
           <button onClick={handleGenerateReport} className="btn-red-luxury">
